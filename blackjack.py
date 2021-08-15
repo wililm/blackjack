@@ -45,8 +45,7 @@ class Card:
 
 
 class Deck:
-    """ Creating a Deck of cards and
-    Deal two cards to both player and dealer. """
+   
 
     def __init__(self):
         self.deck = []
@@ -67,8 +66,7 @@ class Deck:
         return self.player, self.dealer
 
     def delete_cards(self, total_drawn):
-        """ Delete Drawn cards from the Decks """
-
+       
         try:
             for i in total_drawn:
                 self.deck.remove(i)
@@ -77,9 +75,7 @@ class Deck:
 
 
 class Hand:
-    """ Adding the values of player/dealer cards 
-    and change the values of Aces acc. to situation. """
-
+   
     def __init__(self):
         self.cards = []
         self.value = 0
@@ -100,9 +96,7 @@ class Hand:
 
 
 class Chips:
-    """ Player/dealer chips for making bets
-    and Adding/Deducting amount in/from Player's total. """
-
+   
     def __init__(self):
         self.total = 100
         self.bet = 0
@@ -124,11 +118,11 @@ def take_bet(bet_amount, player_money):
         return bet_amount
 
     except TypeError:
-        return "Invalid bet amount"
+        return "Invalid Amount"
 
 
 def success_rate(card, obj_h):
-    """ Calculate Success rate of 'HIT' new cards """
+   
 
     rate = 0
     diff = 21 - obj_h.value
@@ -143,7 +137,7 @@ def success_rate(card, obj_h):
             l_rate -= 99
         print(f"[ WIN(hit) : {100-l_rate}% | LOSS(hit) : {l_rate}% ]")
     else:
-        print(f"[ GOLD IN YOUR HAND!!!!]")
+        print(f"[ Ohhh Yeah!!!!]")
 
 
 def hits(obj_de):
@@ -156,9 +150,9 @@ def blackj_options(p_chips, obj_de, obj_h, dealer_card):
     global PLAYING
     next_card = hits(obj_de)
     success_rate(next_card, obj_h)
-    choice = str(input(f"[ HIT | STAND | SURRENDER | DOUBLE ] : ")).lower()
+    choice = str(input(f"[ HIT ME | STAND | I SURRENDER | DOUBLE DOWN ] : ")).lower()
     print("\n")
-    if choice == "hit":
+    if choice == "hit me":
         # hits(obj_de, obj_h)
         obj_h.add_cards(next_card)
         show_some(obj_h.cards, dealer_card, obj_h)
@@ -166,19 +160,19 @@ def blackj_options(p_chips, obj_de, obj_h, dealer_card):
     elif choice == "stand":
         PLAYING = False
 
-    elif choice == "surrender":
+    elif choice == "i surrender":
         p_chips.bet = p_chips.bet / 2
         PLAYING = False
         obj_h.value += 21
 
-    elif choice == "double":
+    elif choice == "double down":
         if p_chips.bet * 2 <= p_chips.total:
             p_chips.bet *= 2
             next_d_card = hits(obj_de)
             obj_h.add_cards(next_d_card)
             PLAYING = False
         else:
-            print(" --You can't Double Down, Money isn't Enough--")
+            print(" --You can't Double Down, Not Enough Dough--")
     else:
         print(" --Invalid Choice--")
 
@@ -249,7 +243,7 @@ def clear_screen():
 def greet():
     print(" " + "".center(40, "_"), "|" + "".center(40, " ") + "|", sep="\n")
     print(
-        "|" + "HaNd Of BLaCk_JaCk".center(40, " ") + "|",
+        "|" + "Lets Play BlackJack".center(40, " ") + "|",
         "|" + "".center(40, "_") + "|",
         sep="\n",
     )
@@ -317,7 +311,7 @@ def main():
                 d_hand.add_cards(d_card)
                 if dealer_bust(d_hand, p_hand, p_chips):
                     p_win += 1
-                    print("\n -- DEALER --> BUUUSSTTT\n")
+                    print("\n -- DEALER --> OHHHH BUSSTTT\n")
                     break
             show_all(p_hand.cards, d_hand.cards, p_hand, d_hand)
 
@@ -339,7 +333,7 @@ def main():
         ans = str(input(" Play again(YES/NO) : ")).lower()
         if ans != "yes" or p_chips.total < 1:
             if p_chips.total < 1:
-                print(" NO MORE MONEY !!! ")
+                print(" Sorry UR Broke !!! ")
             break
         clear_screen()
         greet2(str(p_win), str(d_win), str(draw))  # Score board location -> Top
