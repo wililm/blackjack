@@ -1,5 +1,5 @@
-import random
-
+from random import choices, shuffle
+from os import system, name
 
 SUITS = ("Hearts", "Diamonds", "Spades", "Clubs")
 RANKS = (
@@ -32,16 +32,22 @@ VALUES = {
     "King": 10,
     "Ace": 11,
 }
+PLAYING = True
+
 
 class Card:
     def __init__(self, suit, rank):
         self.suit = suit
         self.rank = rank
 
-    def __repr__(self):
-        return " of ".join((self.rank, self.suit))
-  
+    def __str__(self):
+        return self.rank + " of " + self.suit
+
+
 class Deck:
+    """ Creating a Deck of cards and
+    Deal two cards to both player and dealer. """
+
     def __init__(self):
         self.deck = []
         self.player = []
@@ -51,144 +57,293 @@ class Deck:
                 self.deck.append((suit, rank))
 
     def shuffle(self):
-        if len(self.cards) > 1:
-            random.shuffle(self.cards)
+        shuffle(self.deck)
 
-    def deal(self):
-        if len(self.cards) > 1:
-            return self.cards.pop(0)
+    def deal_cards(self):
+        self.player = choices(self.deck, k=2)
+        self.delete_cards(self.player)
+        self.dealer = choices(self.deck, k=2)
+        self.delete_cards(self.dealer)  # Delete Drawn Cards
+        return self.player, self.dealer
 
-      
+    def delete_cards(self, total_drawn):
+        """ Delete Drawn cards from the Decks """
+
+        try:
+            for i in total_drawn:
+                self.deck.remove(i)
+        except ValueError:
+            pass
+
+
 class Hand:
-    def __init__(self, dealer=False):
-        self.dealer = dealer
+    """ Adding the values of player/dealer cards 
+    and change the values of Aces acc. to situation. """
+
+    def __init__(self):
         self.cards = []
         self.value = 0
+        self.aces = 0
 
-    def add_card(self, card):
-        self.cards.append(card)
-    
-  
-def calculate_value(self):
-        self.value = 0
-        has_ace = False
-        for card in self.cards:
-            if card.value.isnumeric():
-                self.value += int(card.value)
-            else:
-                if card.value == "A":
-                    has_ace = True
-                    self.value += 11
-                else:
-                    self.value += 10
+    def add_cards(self, card):
+        self.cards.extend(card)
+        for count, ele in enumerate(card, 0):
+            if ele[1] == "Ace":
+                self.aces += 1
+            self.value += VALUES[ele[1]]
+        self.adjust_for_ace()
 
-        if has_ace and self.value > 21:
+    def adjust_for_ace(self):
+        while self.aces > 0 and self.value > 21:
             self.value -= 10
+            self.aces -= 1
 
-    def get_value(self):
-        self.calculate_value()
-        return self.value
-      
-  def display(self):
-        if self.dealer:
-            print("hidden")
-            print(self.cards[1])
-        else:
-            for card in self.cards:
-                print(card)
-            print("Value:", self.get_value())
-class Game:
+
+class Chips:
+    """ Player/dealer chips for making bets
+    and Adding/Deducting amount in/from Player's total. """
+
     def __init__(self):
-        pass
+        self.total = 100
+        self.bet = 0
+        self.winnings = 0
 
-    def play(self):
-        playing = True
+    def win_bet(self):
+        self.total += self.bet
+        self.winnings += 1
 
-        while playing:
-            self.deck = Deck()
-            self.deck.shuffle()
+    def loss_bet(self):
+        self.total -= self.bet
+        self.winnings += 1
 
-            self.player_hand = Hand()
-            self.dealer_hand = Hand(dealer=True)
 
-            for i in range(2):
-                self.player_hand.add_card(self.deck.deal())
-                self.dealer_hand.add_card(self.deck.deal())
+def take_bet(bet_amount, player_money):
+    try:
+        while bet_amount > player_money or bet_amount <= 0:
+            bet_amount = int(input(" Enter amount again : "))
+        return bet_amount
 
-            print("Your hand is:")
-            self.player_hand.display()
-            print()
-            print("Dealer's hand is:")
-            self.dealer_hand.display()  
+    except TypeError:
+        return "Invalid bet amount"
 
-        game_over = False
 
-        while not game_over:
-            player_has_blackjack, dealer_has_blackjack = self.check_for_blackjack() 
-            
-            
-    def check_for_blackjack(self):
-        player = False
-        dealer = False
-        if self.player_hand.get_value() == 21:
-            player = True
-        if self.dealer_hand.get_value() == 21:
-            dealer = True
+def success_rate(card, obj_h):
+    """ Calculate Success rate of 'HIT' new cards """
 
-        return player, dealer
-       
-        if player_has_blackjack or dealer_has_blackjack:
-                    game_over = True
-                    self.show_blackjack_results(
-                        player_has_blackjack, dealer_has_blackjack)
-                    continue
-   def show_blackjack_results(self, player_has_blackjack, dealer_has_blackjack):
-        if player_has_blackjack and dealer_has_blackjack:
-            print("Both players have blackjack! Draw!")
+    rate = 0
+    diff = 21 - obj_h.value
+    if diff != 0:
+        rate = (VALUES[card[0][1]] / diff) * 100
 
-        elif player_has_blackjack:
-            print("You have blackjack! You win!")
+    if rate < 100:
+        print(f"[ WIN(hit) : {int(rate)}% | LOSS(hit) : {100-int(rate)}% ]")
+    elif rate > 100:
+        l_rate = int(rate - (rate - 99))  # Round to 99
+        if card[0][1] == "Ace":
+            l_rate -= 99
+        print(f"[ WIN(hit) : {100-l_rate}% | LOSS(hit) : {l_rate}% ]")
+    else:
+        print(f"[ GOLD IN YOUR HAND!!!!]")
 
-        elif dealer_has_blackjack:
-            print("Dealer has blackjack! Dealer wins!")
-            
-            choice = input("Please choose [Hit / Stick] ").lower()
-                while choice not in ["h", "s", "hit", "stick"]:
-                    choice = input("Please enter 'hit' or 'stick' (or H/S) ").lower()
-                  if choice in ['hit', 'h']:
-                    self.player_hand.add_card(self.deck.deal())
-                    self.player_hand.display()
-                    
-   def player_is_over(self):
-        return self.player_hand.get_value() > 21
-            if self.player_is_over():
-                        print("You have lost!")
-                        game_over = True
-            else:
-                    player_hand_value = self.player_hand.get_value()
-                    dealer_hand_value = self.dealer_hand.get_value()
 
-                    print("Final Results")
-                    print("Your hand:", player_hand_value)
-                    print("Dealer's hand:", dealer_hand_value)
+def hits(obj_de):
+    new_card = [obj_de.deal_cards()[0][0]]
+    # obj_h.add_cards(new_card)
+    return new_card
 
-                    if player_hand_value > dealer_hand_value:
-                        print("You Win!")
-                    elif player_hand_value == dealer_hand_value:
-                        print("Tie!")
-                    else:
-                        print("Dealer Wins!")
-                    game_over = True
-                    
-            again = input("Play Again? [Y/N] ")
-            while again.lower() not in ["y", "n"]:
-                again = input("Please enter Y or N ")
-            if again.lower() == "n":
-                print("Thanks for playing!")
-                playing = False
-            else:
-                game_over = False
-                
-if __name__ == "__main__":
-    game = Game()
-    game.play()    
+
+def blackj_options(p_chips, obj_de, obj_h, dealer_card):
+    global PLAYING
+    next_card = hits(obj_de)
+    success_rate(next_card, obj_h)
+    choice = str(input(f"[ HIT | STAND | SURRENDER | DOUBLE ] : ")).lower()
+    print("\n")
+    if choice == "hit":
+        # hits(obj_de, obj_h)
+        obj_h.add_cards(next_card)
+        show_some(obj_h.cards, dealer_card, obj_h)
+
+    elif choice == "stand":
+        PLAYING = False
+
+    elif choice == "surrender":
+        p_chips.bet = p_chips.bet / 2
+        PLAYING = False
+        obj_h.value += 21
+
+    elif choice == "double":
+        if p_chips.bet * 2 <= p_chips.total:
+            p_chips.bet *= 2
+            next_d_card = hits(obj_de)
+            obj_h.add_cards(next_d_card)
+            PLAYING = False
+        else:
+            print(" --You can't Double Down, Money isn't Enough--")
+    else:
+        print(" --Invalid Choice--")
+
+
+def show_some(player_cards, dealer_cards, obj_h):
+    print(f" ----->\n PLAYER CARDS [{obj_h.value}] : {player_cards}")
+    print(
+        f" DEALER CARDS [{VALUES[dealer_cards[1][1]]}] : {[dealer_cards[1]]} \n ----->\n"
+    )
+
+
+def show_all(player_cards, dealer_cards, obj_h, obj_d):
+    print(f" ----->\n PLAYER_CARDS [{obj_h.value}] : {player_cards}")
+    print(f" DEALER_CARDS [{obj_d.value}] : {dealer_cards} \n ----->\n")
+
+
+########################################
+# End game Scenarios
+
+
+def player_bust(obj_h, obj_c):
+    if obj_h.value > 21:
+        obj_c.loss_bet()
+        return True
+    return False
+
+
+def player_wins(obj_h, obj_d, obj_c):
+    if any((obj_h.value == 21, obj_h.value > obj_d.value and obj_h.value < 21)):
+        obj_c.win_bet()
+        return True
+    return False
+
+
+def dealer_bust(obj_d, obj_h, obj_c):
+    if obj_d.value > 21:
+        if obj_h.value < 21:
+            obj_c.win_bet()
+        return True
+    return False
+
+
+def dealer_wins(obj_h, obj_d, obj_c):
+    if any((obj_d.value == 21, obj_d.value > obj_h.value and obj_d.value < 21)):
+        obj_c.loss_bet()
+        return True
+    return False
+
+
+def push(obj_h, obj_d):
+    if obj_h.value == obj_d.value:
+        return True
+    return False
+
+
+def player_surrender(obj_c):
+    obj_c.loss_bet()
+    return True
+
+
+#######################################
+
+
+def clear_screen():
+    system("cls" if name == "nt" else "clear")
+
+
+def greet():
+    print(" " + "".center(40, "_"), "|" + "".center(40, " ") + "|", sep="\n")
+    print(
+        "|" + "HaNd Of BLaCk_JaCk".center(40, " ") + "|",
+        "|" + "".center(40, "_") + "|",
+        sep="\n",
+    )
+
+
+def greet2(p_count, d_count, draw_c):
+    print(" " + "".center(30, "_"))
+    print(
+        "|" + "__PLAYER__".ljust(7, " ") + "|",
+        "_DEALER__".center(7, " ") + "|",
+        "_DRAW__".rjust(7, " ") + "|",
+        sep="_",
+    )
+    print(
+        "|"
+        + "".center(10, " ")
+        + "|"
+        + "".center(10, " ")
+        + "|"
+        + "".center(8, " ")
+        + "|"
+    )
+    print(
+        "|"
+        + p_count.center(10, "_")
+        + "|"
+        + d_count.center(10, "_")
+        + "|"
+        + draw_c.center(8, "_")
+        + "|"
+    )
+
+
+def main():
+    p_win, d_win, draw = 0, 0, 0
+    greet()
+    p_chips = Chips()
+    while True:
+        cards_deck = Deck()
+        cards_deck.shuffle()
+        p_cards, d_cards = cards_deck.deal_cards()
+        p_hand = Hand()
+        p_hand.add_cards(p_cards)
+        print("\n Total money -> ", p_chips.total)
+        bet_money = int(input(" Enter Bet amount : "))
+        p_chips.bet = take_bet(bet_money, p_chips.total)
+        print("\n")
+
+        show_some(p_cards, d_cards, p_hand)
+        global PLAYING
+        while PLAYING:  # Recall var. from hit and stand function
+            blackj_options(p_chips, cards_deck, p_hand, d_cards)
+            if player_bust(p_hand, p_chips):
+                d_win += 1
+                print("\n -- PLAYER --> BUUUSSTTT")
+                break
+
+        PLAYING = True
+
+        if p_hand.value <= 21:
+            d_hand = Hand()
+            d_hand.add_cards(d_cards)
+            while d_hand.value < 17:
+                d_card = hits(cards_deck)
+                d_hand.add_cards(d_card)
+                if dealer_bust(d_hand, p_hand, p_chips):
+                    p_win += 1
+                    print("\n -- DEALER --> BUUUSSTTT\n")
+                    break
+            show_all(p_hand.cards, d_hand.cards, p_hand, d_hand)
+
+            if push(p_hand, d_hand):
+                draw += 1
+                print("\n " + " PUSH ".center(12, "-"))
+            elif player_wins(p_hand, d_hand, p_chips):
+                p_win += 1
+                print(" " + " PLAYER_WINS ".center(22, "-"))
+            elif dealer_wins(p_hand, d_hand, p_chips):
+                d_win += 1
+                print(" " + " DEALER WINS ".center(22, "-"))
+
+        else:
+            print("\n " + " DEALER WINS ".center(22, "-"))
+
+        print(f"\n >>> Available Money >>> {p_chips.total} \n")
+
+        ans = str(input(" Play again(YES/NO) : ")).lower()
+        if ans != "yes" or p_chips.total < 1:
+            if p_chips.total < 1:
+                print(" NO MORE MONEY !!! ")
+            break
+        clear_screen()
+        greet2(str(p_win), str(d_win), str(draw))  # Score board location -> Top
+        print("\n" + " ".ljust(30, "-"))
+
+
+main()
